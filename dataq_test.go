@@ -58,7 +58,7 @@ func TestReadL1ExistentField(t *testing.T) {
 }
 func TestReadL1UnexportedField(t *testing.T) {
 	l1 := getData()
-	_, err := Get("beta", l1)
+	_, err := Get(Beta_name, l1)
 	if err == nil {
 		t.Error("beta cannot be accessed")
 	}

@@ -34,3 +34,4 @@ DataQ can be useful when struct's fields must be dyamically addressed.
 == Inspirational references
 
 * https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/
+* https://github.com/jinzhu/copier/blob/master/copier.go

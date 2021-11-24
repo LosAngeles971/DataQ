@@ -275,18 +275,3 @@ func GetFlatData(source interface{}) (map[string]interface{}, error) {
 		return data, fmt.Errorf("unhandled type of data %v", obj.Kind())
 	}
 }
-
-func Clone(source interface{}) (interface{}, error) {
-	var obj reflect.Value
-	if reflect.ValueOf(source).Kind() == reflect.Ptr {
-		// this is the case of passing a pointer to a struct because you wanna update a field
-		obj = reflect.ValueOf(source).Elem()
-	} else {
-		obj = reflect.ValueOf(source)
-	}
-	if obj.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("provided interface is not a struct or a pointer to a struct")
-	}
-	n := obj
-	return n, nil
-}
