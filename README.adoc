@@ -1,0 +1,36 @@
+= DataQ
+
+DataQ is a simple utility to read/write fields into a hierarchical data model built on top of a concatenation of structs.
+Indeed, DataQ allows to reference a struct's field using hierarchical fully qualified name.
+
+For instance, given the following concatenation of structs:
+
+[source,golang]
+----
+type Level2 struct {
+	Ypsilon int
+	Omega   string
+}
+
+type Level1 struct {
+	Alfa  float64
+	beta  string
+	Gamma *Level2
+}
+----
+
+The fully qualified name of the field **Ypsilone** is **Gamma.Ypsilon**.
+
+== Read and write fields using DataQ
+
+[source,golang]
+----
+----
+
+== Why DataQ
+
+DataQ can be useful when struct's fields must be dyamically addressed.
+
+== Inspirational references
+
+* https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/
