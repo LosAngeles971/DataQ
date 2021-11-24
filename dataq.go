@@ -7,6 +7,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -83,7 +84,7 @@ func GetFloat64(name string, source interface{}) (float64, error) {
 	}
 	t := reflect.TypeOf(value).Kind()
 	switch t {
-	case reflect.Float64:
+	case reflect.Float64, reflect.Float32, reflect.Int64, reflect.Int:
 		return value.(float64), nil
 	case reflect.String:
 		return strconv.ParseFloat(value.(string), 64)
@@ -100,7 +101,7 @@ func GetInt64(name string, source interface{}) (int64, error) {
 	}
 	t := reflect.TypeOf(value).Kind()
 	switch t {
-	case reflect.Int:
+	case reflect.Int64, reflect.Int:
 		return value.(int64), nil
 	case reflect.String:
 		return strconv.ParseInt(value.(string), 0, 64)
@@ -115,13 +116,7 @@ func GetString(name string, source interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	t := reflect.TypeOf(value).Kind()
-	switch t {
-	case reflect.String:
-		return value.(string), nil
-	default:
-		return "", fmt.Errorf("variable %v is not string but %v", name, t)
-	}
+	return value.(string), nil
 }
 
 // update the asked fully qualified field from source in form of string
@@ -158,4 +153,140 @@ func SetFloat64(name string, value float64, source interface{}) error {
 	}
 	v.SetFloat(value)
 	return nil
+}
+
+func Compare(f1 interface{}, f2 interface{}) (bool, error) {
+	k1 := reflect.TypeOf(f1).Kind()
+	k2 := reflect.TypeOf(f2).Kind()
+	if k1 != k2 {
+		return false, nil
+	}
+	switch k1 {
+	case reflect.Int:
+		if f1.(int) != f2.(int) {
+			return false, nil
+		}
+	case reflect.Int64:
+		if f1.(int64) != f2.(int64) {
+			return false, nil
+		}
+	case reflect.Float32:
+		if f1.(float32) != f2.(float32) {
+			return false, nil
+		}
+	case reflect.Float64:
+		if f1.(float64) != f2.(float64) {
+			return false, nil
+		}
+	case reflect.Bool:
+		if f1.(bool) != f2.(bool) {
+			return false, nil
+		}
+	case reflect.String:
+		if f1.(string) != f2.(string) {
+			return false, nil
+		}
+	default:
+		return false, fmt.Errorf("unsupported type %v", k1)
+	}
+	return true, nil
+}
+
+func GetVars(source interface{}) ([]string, error) {
+	fields := []string{}
+	var obj reflect.Value
+	if reflect.ValueOf(source).Kind() == reflect.Ptr {
+		// this is the case of passing a pointer to a struct because you wanna update a field
+		obj = reflect.ValueOf(source).Elem()
+	} else {
+		obj = reflect.ValueOf(source)
+	}
+	switch obj.Kind() {
+	case reflect.Struct:
+		for i := 0; i < obj.NumField(); i++ {
+			f := obj.Field(i)
+			f_name := obj.Type().Field(i).Name
+			err := checkFieldName(f_name)
+			// f must not be a (struct) zero value
+			if f.IsValid() && err == nil {
+				switch f.Kind() {
+				case reflect.Struct, reflect.Ptr:
+					// the field is a struct ready for a sublevel search
+					ff, err := GetVars(f.Interface())
+					if err != nil {
+						return fields, err
+					}
+					for _, name := range ff {
+						fields = append(fields, f_name + "." + name)
+					}
+				case reflect.Float64, reflect.String, reflect.Bool, reflect.Int, reflect.Float32:
+					fields = append(fields, f_name)
+				default:
+					log.Printf("field %v got a not supported type %v", f_name, f.Kind())
+				}
+			} else {
+				log.Printf("field %v is not valid", f_name)
+			}
+		}
+		return fields, nil
+	default:
+		return fields, fmt.Errorf("unhandled type of data %v", obj.Kind())
+	}
+}
+
+func GetFlatData(source interface{}) (map[string]interface{}, error) {
+	data := map[string]interface{}{}
+	var obj reflect.Value
+	if reflect.ValueOf(source).Kind() == reflect.Ptr {
+		// this is the case of passing a pointer to a struct because you wanna update a field
+		obj = reflect.ValueOf(source).Elem()
+	} else {
+		obj = reflect.ValueOf(source)
+	}
+	switch obj.Kind() {
+	case reflect.Struct:
+		for i := 0; i < obj.NumField(); i++ {
+			f := obj.Field(i)
+			f_name := obj.Type().Field(i).Name
+			err := checkFieldName(f_name)
+			// f must not be a (struct) zero value
+			if f.IsValid() && err == nil {
+				switch f.Kind() {
+				case reflect.Struct, reflect.Ptr:
+					// the field is a struct ready for a sublevel search
+					subdata, err := GetFlatData(f.Interface())
+					if err != nil {
+						return data, err
+					}
+					for name, value := range subdata {
+						data[f_name + "." + name] = value
+					}
+				case reflect.Float64, reflect.String, reflect.Bool, reflect.Int, reflect.Float32:
+					data[f_name] = f.Interface()
+				default:
+					log.Printf("field %v got a not supported type %v", f_name, f.Kind())
+				}
+			} else {
+				log.Printf("field %v is not valid", f_name)
+			}
+		}
+		return data, nil
+	default:
+		return data, fmt.Errorf("unhandled type of data %v", obj.Kind())
+	}
+}
+
+func Clone(source interface{}) (interface{}, error) {
+	var obj reflect.Value
+	if reflect.ValueOf(source).Kind() == reflect.Ptr {
+		// this is the case of passing a pointer to a struct because you wanna update a field
+		obj = reflect.ValueOf(source).Elem()
+	} else {
+		obj = reflect.ValueOf(source)
+	}
+	if obj.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("provided interface is not a struct or a pointer to a struct")
+	}
+	n := obj
+	return n, nil
 }

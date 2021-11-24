@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"reflect"
 	"testing"
 )
 
@@ -28,6 +27,12 @@ const (
 	Beta_name = "beta"
 	Beta_value = "test1"
 )
+
+var Vars = map[string]interface{}{
+	Alfa_name: Alfa_value,
+	"Gamma." + Ypsilon_name: Ypsilon_value,
+	"Gamma." + Omega_name: Omega_value,
+}
 
 func getData() Level1 {
 	l2 := Level2{
@@ -105,5 +110,65 @@ func TestUpdateL2Field(t *testing.T) {
 	}
 	if omega != Omega_update {
 		t.Errorf("%v should be %v not %v", Omega_name, Omega_update, omega)
+	}
+}
+
+func TestGetVars(t *testing.T) {
+	l1 := getData()
+	vars, err := GetVars(l1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range vars {
+		_, ok := Vars[name]
+		if !ok {
+			t.Errorf("variable %v is not expected", name)
+		}
+	}
+	for name := range Vars {
+		ok := false
+		for i := range vars {
+			if vars[i] == name {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			t.Errorf("variable %v is missing", name)
+		}
+	}
+}
+
+func TestGetFlatDatas(t *testing.T) {
+	l1 := getData()
+	vars, err := GetFlatData(l1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, value := range vars {
+		vv, ok := Vars[name]
+		if !ok {
+			t.Errorf("variable %v is not expected", name)
+		}
+		ok, err := Compare(vv, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !ok {
+			t.Errorf("variable %v got %v instead of %v", name, value, vv)
+		}
+	}
+	for name, value := range Vars {
+		vv, ok := vars[name]
+		if !ok {
+			t.Errorf("variable %v is missing", name)
+		}
+		ok, err := Compare(vv, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !ok {
+			t.Errorf("variable %v got %v instead of %v", name, vv, value)
+		}
 	}
 }
