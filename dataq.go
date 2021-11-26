@@ -17,15 +17,15 @@ import (
 // check if the field name is valid
 func checkFieldName(name string) error {
 	if len(name) < 0 {
-		return fmt.Errorf("field name cannot be null")
+		return fmt.Errorf("field's name cannot be null")
 	}
 	if !unicode.IsUpper([]rune(name)[0]) {
-		return fmt.Errorf("field name must be exported (first letter capitalized) [%v]", name[0])
+		return fmt.Errorf("field must be exported (first letter of the name capitalized) [%v]", name[0])
 	}
 	return nil
 }
 
-// recursive function to browse a struct till to the desired target field
+// recursive browsing of a struct till to the desired target field
 func getValueOf(name string, source interface{}) (reflect.Value, error) {
 	fields := strings.Split(name, ".")
 	field_name := fields[0]
@@ -34,7 +34,7 @@ func getValueOf(name string, source interface{}) (reflect.Value, error) {
 	}
 	var obj reflect.Value
 	if reflect.ValueOf(source).Kind() == reflect.Ptr {
-		// this is the case of passing a pointer to a struct because you wanna update a field
+		// taking the object from the pointer
 		obj = reflect.ValueOf(source).Elem()
 	} else {
 		obj = reflect.ValueOf(source)
@@ -45,18 +45,15 @@ func getValueOf(name string, source interface{}) (reflect.Value, error) {
 		// f must not be a (struct) zero value
 		if f.IsValid() {
 			if len(fields) == 1 {
-				// reached the desired field
+				// positive exit: reached the target field
 				return f, nil
 			} else {
 				switch f.Kind() {
-				case reflect.Struct:
-					// the field is a struct ready for a sublevel search
-					return getValueOf(strings.Join(fields[1:], "."), f.Interface())
-				case reflect.Ptr:
-					// the field is a pointer to a struct (it should be a struct) ready for a sublevel search
+				case reflect.Struct, reflect.Ptr:
+					// going to the sublevel (struct) or getting the object from the pointer
 					return getValueOf(strings.Join(fields[1:], "."), f.Interface())
 				default:
-					// the field is not a struct, a sublevel search is not possible
+					// error: field is not a struct or pointer (deep dive not possible)
 					return reflect.Value{}, fmt.Errorf("field %v is a not supported type", f)
 				}
 			}				
@@ -67,7 +64,7 @@ func getValueOf(name string, source interface{}) (reflect.Value, error) {
 	}
 }
 
-// return the asked fully qualified field from source in form of interface{}
+// return the given field from an interface{}
 func Get(name string, source interface{}) (interface{}, error) {
 	f, err := getValueOf(name, source)
 	if err != nil {
@@ -76,7 +73,7 @@ func Get(name string, source interface{}) (interface{}, error) {
 	return f.Interface(), nil
 }
 
-// return the asked fully qualified field from source in form of float64
+// return the given field as Float64 from an interface{}
 func GetFloat64(name string, source interface{}) (float64, error) {
 	value, err := Get(name, source)
 	if err != nil {
@@ -93,7 +90,7 @@ func GetFloat64(name string, source interface{}) (float64, error) {
 	}
 }
 
-// return the asked fully qualified field from source in form of int64
+// return the given field as Int64 from an interface{}
 func GetInt64(name string, source interface{}) (int64, error) {
 	value, err := Get(name, source)
 	if err != nil {
@@ -110,7 +107,7 @@ func GetInt64(name string, source interface{}) (int64, error) {
 	}
 }
 
-// return the asked fully qualified field from source in form of string
+// return the given field as String from an interface{}
 func GetString(name string, source interface{}) (string, error) {
 	value, err := Get(name, source)
 	if err != nil {
@@ -119,7 +116,22 @@ func GetString(name string, source interface{}) (string, error) {
 	return value.(string), nil
 }
 
-// update the asked fully qualified field from source in form of string
+// return the given field as Bool from an interface{}
+func GetBool(name string, source interface{}) (bool, error) {
+	value, err := Get(name, source)
+	if err != nil {
+		return false, err
+	}
+	t := reflect.TypeOf(value).Kind()
+	switch t {
+	case reflect.Bool:
+		return value.(bool), nil
+	default:
+		return false, fmt.Errorf("variable %v is not bool but %v", name, t)
+	}
+}
+
+// update the given field of the interface{} with a string
 func SetString(name string, value string, source interface{}) error {
 	f, err := getValueOf(name, source)
 	if err != nil {
@@ -135,7 +147,7 @@ func SetString(name string, value string, source interface{}) error {
 	return fmt.Errorf("field %v not valid for changing", f)
 }
 
-// update the asked fully qualified field from source in form of int64
+// update the given field of the interface{} with a Int64
 func SetInt64(name string, value int64, source interface{}) error {
 	v, err := getValueOf(name, source)
 	if err != nil {
@@ -145,7 +157,7 @@ func SetInt64(name string, value int64, source interface{}) error {
 	return nil
 }
 
-// update the asked fully qualified field from source in form of float64
+// update the given field of the interface{} with a Float64
 func SetFloat64(name string, value float64, source interface{}) error {
 	v, err := getValueOf(name, source)
 	if err != nil {
@@ -155,6 +167,17 @@ func SetFloat64(name string, value float64, source interface{}) error {
 	return nil
 }
 
+// update the given field of the interface{} with a Bool
+func SetBool(name string, value bool, source interface{}) error {
+	v, err := getValueOf(name, source)
+	if err != nil {
+		return err
+	}
+	v.SetBool(value)
+	return nil
+}
+
+// compare two fields without knowing their types
 func Compare(f1 interface{}, f2 interface{}) (bool, error) {
 	k1 := reflect.TypeOf(f1).Kind()
 	k2 := reflect.TypeOf(f2).Kind()
@@ -192,6 +215,7 @@ func Compare(f1 interface{}, f2 interface{}) (bool, error) {
 	return true, nil
 }
 
+// return the list of exported fields using their fully qualified names from the interface{}
 func GetVars(source interface{}) ([]string, error) {
 	fields := []string{}
 	var obj reflect.Value
@@ -234,6 +258,7 @@ func GetVars(source interface{}) ([]string, error) {
 	}
 }
 
+// return all fields and their values as a map from the interface{}
 func GetFlatData(source interface{}) (map[string]interface{}, error) {
 	data := map[string]interface{}{}
 	var obj reflect.Value
