@@ -36,14 +36,45 @@ The initial idea behind this simple DataQ library is to simplify the usage of da
 
 A possible scenario is using Govaluate footnote:[https://github.com/Knetic/govaluate] to evaluate arbitrary expressions, where referenced variables come from mashaling a JSON response and the latter is obtained by an external API. Govaluate accepts a __map[string]interface{}__ to get the variables reference by the expressions, thus you may have to build that map extracing data from the potentially complex data structure coming from the API.
 
+Given the previous fictional struct Level1, you may suppose to calculate the mathematical expression: 
+
+[source,math]
+----
+"Alfa + Gamma_Ypsilon"
+----
+
+Note that the separator for the fully qualified name of the field is now "_", in order to avoid conflict with the mathematical syntax.
+
+Using DataQ, the resulting code is:
+
+[source,golang]
+----
+func Calculate(l1 interface{}) error {
+	s := NewSurfer(WithSep("_"))
+	expr, err := govaluate.NewEvaluableExpression("Alfa + Gamma_Ypsilon")
+	if err != nil {
+		return err
+	}
+	flat_data, err := s.GetFlatData(l1)
+	if err != nil {
+		return err
+	}
+	result, err := expr.Evaluate(flat_data)
+	if err != nil {
+		return err
+	}
+	log.Print(result)
+}
+----
+
 == Technical constraints and limitations
 
-* DataQ only handles exported fields of the struct
-* supported field types are: 
-** string
-** float64
-** int64
-** bool
+DataQ only handles exported fields of the struct with a limited set of types:
+
+* string
+* float64
+* int64
+* bool
 
 == Inspirational references
 

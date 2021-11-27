@@ -227,7 +227,11 @@ func (s Surfer) GetFlatData(source interface{}) (map[string]interface{}, error) 
 
 // NewSurfer creates a pointer to a new Surfer object with default configuration
 func NewSurfer(opts ...SurferOption) *Surfer {
-	return &Surfer{
+	s := &Surfer{
 		sep: Default_sep,
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }

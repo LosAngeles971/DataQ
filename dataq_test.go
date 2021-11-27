@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"github.com/Knetic/govaluate"
 )
 
 type Level2 struct {
@@ -26,6 +27,8 @@ const (
 	Omega_update = "updated"
 	Beta_name = "beta"
 	Beta_value = "test1"
+	Expression = "Alfa + Gamma_Ypsilon"
+	Expression_result = 11.0
 )
 
 var Vars = map[string]interface{}{
@@ -178,5 +181,25 @@ func TestGetFlatDatas(t *testing.T) {
 		if !ok {
 			t.Errorf("variable %v got %v instead of %v", name, vv, value)
 		}
+	}
+}
+
+func TestMath(t *testing.T) {
+	l1 := getData()
+	s := NewSurfer(WithSep("_"))
+	expr, err := govaluate.NewEvaluableExpression(Expression)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := s.GetFlatData(l1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := expr.Evaluate(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.(float64) != Expression_result {
+		t.Errorf("result should be %v not %v", Expression_result, result)
 	}
 }
