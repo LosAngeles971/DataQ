@@ -10,63 +10,27 @@ import (
 	"log"
 	"reflect"
 	"strconv"
-	"strings"
-	"unicode"
 )
 
-// check if the field name is valid
-func checkFieldName(name string) error {
-	if len(name) < 0 {
-		return fmt.Errorf("field's name cannot be null")
-	}
-	if !unicode.IsUpper([]rune(name)[0]) {
-		return fmt.Errorf("field must be exported (first letter of the name capitalized) [%v]", name[0])
-	}
-	return nil
+const (
+	Default_sep = "."
+)
+
+type Surfer struct {
+	sep string
 }
 
-// recursive browsing of a struct till to the desired target field
-func getValueOf(name string, source interface{}) (reflect.Value, error) {
-	fields := strings.Split(name, ".")
-	field_name := fields[0]
-	if err := checkFieldName(field_name); err != nil {
-		return reflect.Value{}, err
-	}
-	var obj reflect.Value
-	if reflect.ValueOf(source).Kind() == reflect.Ptr {
-		// taking the object from the pointer
-		obj = reflect.ValueOf(source).Elem()
-	} else {
-		obj = reflect.ValueOf(source)
-	}
-	switch obj.Kind() {
-	case reflect.Struct:
-		f := obj.FieldByName(field_name)
-		// f must not be a (struct) zero value
-		if f.IsValid() {
-			if len(fields) == 1 {
-				// positive exit: reached the target field
-				return f, nil
-			} else {
-				switch f.Kind() {
-				case reflect.Struct, reflect.Ptr:
-					// going to the sublevel (struct) or getting the object from the pointer
-					return getValueOf(strings.Join(fields[1:], "."), f.Interface())
-				default:
-					// error: field is not a struct or pointer (deep dive not possible)
-					return reflect.Value{}, fmt.Errorf("field %v is a not supported type", f)
-				}
-			}				
-		}
-		return reflect.Value{}, fmt.Errorf("missing field %v", field_name)
-	default:
-		return reflect.Value{}, fmt.Errorf("unhandled type of data %v", obj.Kind())
+type SurferOption func(*Surfer)
+
+func WithSep(sep string) SurferOption {
+	return func(s *Surfer) {
+		s.sep = sep
 	}
 }
 
 // return the given field from an interface{}
-func Get(name string, source interface{}) (interface{}, error) {
-	f, err := getValueOf(name, source)
+func (s Surfer) Get(name string, source interface{}) (interface{}, error) {
+	f, err := getValueOf(name, source, s.sep)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +38,8 @@ func Get(name string, source interface{}) (interface{}, error) {
 }
 
 // return the given field as Float64 from an interface{}
-func GetFloat64(name string, source interface{}) (float64, error) {
-	value, err := Get(name, source)
+func (s Surfer) GetFloat64(name string, source interface{}) (float64, error) {
+	value, err := s.Get(name, source)
 	if err != nil {
 		return 0.0, err
 	}
@@ -91,8 +55,8 @@ func GetFloat64(name string, source interface{}) (float64, error) {
 }
 
 // return the given field as Int64 from an interface{}
-func GetInt64(name string, source interface{}) (int64, error) {
-	value, err := Get(name, source)
+func (s Surfer) GetInt64(name string, source interface{}) (int64, error) {
+	value, err := s.Get(name, source)
 	if err != nil {
 		return 0.0, err
 	}
@@ -108,8 +72,8 @@ func GetInt64(name string, source interface{}) (int64, error) {
 }
 
 // return the given field as String from an interface{}
-func GetString(name string, source interface{}) (string, error) {
-	value, err := Get(name, source)
+func (s Surfer) GetString(name string, source interface{}) (string, error) {
+	value, err := s.Get(name, source)
 	if err != nil {
 		return "", err
 	}
@@ -117,8 +81,8 @@ func GetString(name string, source interface{}) (string, error) {
 }
 
 // return the given field as Bool from an interface{}
-func GetBool(name string, source interface{}) (bool, error) {
-	value, err := Get(name, source)
+func (s Surfer) GetBool(name string, source interface{}) (bool, error) {
+	value, err := s.Get(name, source)
 	if err != nil {
 		return false, err
 	}
@@ -132,8 +96,8 @@ func GetBool(name string, source interface{}) (bool, error) {
 }
 
 // update the given field of the interface{} with a string
-func SetString(name string, value string, source interface{}) error {
-	f, err := getValueOf(name, source)
+func (s Surfer) SetString(name string, value string, source interface{}) error {
+	f, err := getValueOf(name, source, s.sep)
 	if err != nil {
 		return err
 	}
@@ -148,8 +112,8 @@ func SetString(name string, value string, source interface{}) error {
 }
 
 // update the given field of the interface{} with a Int64
-func SetInt64(name string, value int64, source interface{}) error {
-	v, err := getValueOf(name, source)
+func (s Surfer) SetInt64(name string, value int64, source interface{}) error {
+	v, err := getValueOf(name, source, s.sep)
 	if err != nil {
 		return err
 	}
@@ -158,8 +122,8 @@ func SetInt64(name string, value int64, source interface{}) error {
 }
 
 // update the given field of the interface{} with a Float64
-func SetFloat64(name string, value float64, source interface{}) error {
-	v, err := getValueOf(name, source)
+func (s Surfer) SetFloat64(name string, value float64, source interface{}) error {
+	v, err := getValueOf(name, source, s.sep)
 	if err != nil {
 		return err
 	}
@@ -168,8 +132,8 @@ func SetFloat64(name string, value float64, source interface{}) error {
 }
 
 // update the given field of the interface{} with a Bool
-func SetBool(name string, value bool, source interface{}) error {
-	v, err := getValueOf(name, source)
+func (s Surfer) SetBool(name string, value bool, source interface{}) error {
+	v, err := getValueOf(name, source, s.sep)
 	if err != nil {
 		return err
 	}
@@ -177,46 +141,8 @@ func SetBool(name string, value bool, source interface{}) error {
 	return nil
 }
 
-// compare two fields without knowing their types
-func Compare(f1 interface{}, f2 interface{}) (bool, error) {
-	k1 := reflect.TypeOf(f1).Kind()
-	k2 := reflect.TypeOf(f2).Kind()
-	if k1 != k2 {
-		return false, nil
-	}
-	switch k1 {
-	case reflect.Int:
-		if f1.(int) != f2.(int) {
-			return false, nil
-		}
-	case reflect.Int64:
-		if f1.(int64) != f2.(int64) {
-			return false, nil
-		}
-	case reflect.Float32:
-		if f1.(float32) != f2.(float32) {
-			return false, nil
-		}
-	case reflect.Float64:
-		if f1.(float64) != f2.(float64) {
-			return false, nil
-		}
-	case reflect.Bool:
-		if f1.(bool) != f2.(bool) {
-			return false, nil
-		}
-	case reflect.String:
-		if f1.(string) != f2.(string) {
-			return false, nil
-		}
-	default:
-		return false, fmt.Errorf("unsupported type %v", k1)
-	}
-	return true, nil
-}
-
 // return the list of exported fields using their fully qualified names from the interface{}
-func GetVars(source interface{}) ([]string, error) {
+func (s Surfer) GetVars(source interface{}) ([]string, error) {
 	fields := []string{}
 	var obj reflect.Value
 	if reflect.ValueOf(source).Kind() == reflect.Ptr {
@@ -236,7 +162,7 @@ func GetVars(source interface{}) ([]string, error) {
 				switch f.Kind() {
 				case reflect.Struct, reflect.Ptr:
 					// the field is a struct ready for a sublevel search
-					ff, err := GetVars(f.Interface())
+					ff, err := s.GetVars(f.Interface())
 					if err != nil {
 						return fields, err
 					}
@@ -259,7 +185,7 @@ func GetVars(source interface{}) ([]string, error) {
 }
 
 // return all fields and their values as a map from the interface{}
-func GetFlatData(source interface{}) (map[string]interface{}, error) {
+func (s Surfer) GetFlatData(source interface{}) (map[string]interface{}, error) {
 	data := map[string]interface{}{}
 	var obj reflect.Value
 	if reflect.ValueOf(source).Kind() == reflect.Ptr {
@@ -279,7 +205,7 @@ func GetFlatData(source interface{}) (map[string]interface{}, error) {
 				switch f.Kind() {
 				case reflect.Struct, reflect.Ptr:
 					// the field is a struct ready for a sublevel search
-					subdata, err := GetFlatData(f.Interface())
+					subdata, err := s.GetFlatData(f.Interface())
 					if err != nil {
 						return data, err
 					}
@@ -298,5 +224,11 @@ func GetFlatData(source interface{}) (map[string]interface{}, error) {
 		return data, nil
 	default:
 		return data, fmt.Errorf("unhandled type of data %v", obj.Kind())
+	}
+}
+
+func NewSurfer(opts ...SurferOption) *Surfer {
+	return &Surfer{
+		sep: Default_sep,
 	}
 }

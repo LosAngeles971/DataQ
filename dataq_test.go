@@ -48,7 +48,8 @@ func getData() Level1 {
 }
 func TestReadL1ExistentField(t *testing.T) {
 	l1 := getData()
-	alfa, err := GetFloat64(Alfa_name, l1)
+	s := NewSurfer()
+	alfa, err := s.GetFloat64(Alfa_name, l1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +59,8 @@ func TestReadL1ExistentField(t *testing.T) {
 }
 func TestReadL1UnexportedField(t *testing.T) {
 	l1 := getData()
-	_, err := Get(Beta_name, l1)
+	s := NewSurfer()
+	_, err := s.Get(Beta_name, l1)
 	if err == nil {
 		t.Error("beta cannot be accessed")
 	}
@@ -66,7 +68,8 @@ func TestReadL1UnexportedField(t *testing.T) {
 
 func TestReadL2NotExistentField(t *testing.T) {
 	l1 := getData()
-	_, err2 := Get("Alfa.Omega", l1)
+	s := NewSurfer()
+	_, err2 := s.Get("Alfa.Omega", l1)
 	if err2 == nil {
 		t.Errorf("varibale Alfa.omega should not exist")
 	}
@@ -74,7 +77,8 @@ func TestReadL2NotExistentField(t *testing.T) {
 
 func TestReadL2ExistentField(t *testing.T) {
 	l1 := getData()
-	omega, err2 := GetString("Gamma.Omega", l1)
+	s := NewSurfer()
+	omega, err2 := s.GetString("Gamma.Omega", l1)
 	if err2 != nil {
 		t.Fatal(err2)
 	}
@@ -85,11 +89,12 @@ func TestReadL2ExistentField(t *testing.T) {
 
 func TestUpdateL1Field(t *testing.T) {
 	l1 := getData()
-	err := SetFloat64(Alfa_name, Alfa_update, &l1)
+	s := NewSurfer()
+	err := s.SetFloat64(Alfa_name, Alfa_update, &l1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	alfa, err := GetFloat64(Alfa_name, l1)
+	alfa, err := s.GetFloat64(Alfa_name, l1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,11 +105,12 @@ func TestUpdateL1Field(t *testing.T) {
 
 func TestUpdateL2Field(t *testing.T) {
 	l1 := getData()
-	err2 := SetString("Gamma.Omega", Omega_update, &l1)
+	s := NewSurfer()
+	err2 := s.SetString("Gamma.Omega", Omega_update, &l1)
 	if err2 != nil {
 		t.Fatal(err2)
 	}
-	omega, err := GetString("Gamma.Omega", l1)
+	omega, err := s.GetString("Gamma.Omega", l1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +121,8 @@ func TestUpdateL2Field(t *testing.T) {
 
 func TestGetVars(t *testing.T) {
 	l1 := getData()
-	vars, err := GetVars(l1)
+	s := NewSurfer()
+	vars, err := s.GetVars(l1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +148,8 @@ func TestGetVars(t *testing.T) {
 
 func TestGetFlatDatas(t *testing.T) {
 	l1 := getData()
-	vars, err := GetFlatData(l1)
+	s := NewSurfer()
+	vars, err := s.GetFlatData(l1)
 	if err != nil {
 		t.Fatal(err)
 	}

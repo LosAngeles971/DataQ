@@ -1,37 +1,53 @@
 = DataQ
 
-DataQ is a simple utility to read/write fields into a hierarchical data model built on top of a concatenation of structs.
-Indeed, DataQ allows to reference a struct's field using hierarchical fully qualified name.
+DataQ's purpose is simplifying the read/write operations over data build on top of a concatenation of structs.
+The idea is allowing to reference struct's fields using a hierarchical fully qualified name.
 
-For instance, given the following concatenation of structs:
+Below an fictional data structure built on top of a concatenation of a three structs.
 
 [source,golang]
 ----
+type Level3 struct {
+	Delta int
+}
+
 type Level2 struct {
 	Ypsilon int
 	Omega   string
+	Eplison *Level3
 }
 
 type Level1 struct {
 	Alfa  float64
-	beta  string
 	Gamma *Level2
 }
 ----
 
-The fully qualified name of the field **Ypsilone** is **Gamma.Ypsilon**.
+DataQ allows to reference the above fields using fully qualified names:
 
-== Read and write fields using DataQ
+* Alfa
+* Gamma.Ypsilon
+* Gamma.Omega
+* Gamma.Epsilon.Delta
 
-[source,golang]
-----
-----
+== Why DataQ?
 
-== Why DataQ
+The initial idea behind this simple DataQ library is to simplify the usage of data transfer objects, when the source data structure is different from the target one.
 
-DataQ can be useful when struct's fields must be dyamically addressed.
+A possible scenario is using Govaluate footnote:[https://github.com/Knetic/govaluate] to evaluate arbitrary expressions, where referenced variables come from mashaling a JSON response and the latter is obtained by an external API. Govaluate accepts a __map[string]interface{}__ to get the variables reference by the expressions, thus you may have to build that map extracing data from the potentially complex data structure coming from the API.
+
+== Technical constraints and limitations
+
+* DataQ only handles exported fields of the struct
+* supported field types are: 
+** string
+** float64
+** int64
+** bool
 
 == Inspirational references
 
+* https://github.com/Knetic/govaluate
 * https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/
 * https://github.com/jinzhu/copier/blob/master/copier.go
+* https://code.rocketnine.space/tslocum/godoc-static
