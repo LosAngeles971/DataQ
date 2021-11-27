@@ -19,13 +19,14 @@ type Surfer struct {
 
 type SurferOption func(*Surfer)
 
+// WithSep sets the separation string for the fully qualified name of the fields
 func WithSep(sep string) SurferOption {
 	return func(s *Surfer) {
 		s.sep = sep
 	}
 }
 
-// return the given field from an interface{}
+// Get returns the value of the given field
 func (s Surfer) Get(name string, source interface{}) (interface{}, error) {
 	f, err := getValueOf(name, source, s.sep)
 	if err != nil {
@@ -34,7 +35,7 @@ func (s Surfer) Get(name string, source interface{}) (interface{}, error) {
 	return f.Interface(), nil
 }
 
-// return the given field as Float64 from an interface{}
+// GetBool returns the float64 value of the given field
 func (s Surfer) GetFloat64(name string, source interface{}) (float64, error) {
 	value, err := s.Get(name, source)
 	if err != nil {
@@ -51,7 +52,7 @@ func (s Surfer) GetFloat64(name string, source interface{}) (float64, error) {
 	}
 }
 
-// return the given field as Int64 from an interface{}
+// GetInt64 returns the int64 value of the given field
 func (s Surfer) GetInt64(name string, source interface{}) (int64, error) {
 	value, err := s.Get(name, source)
 	if err != nil {
@@ -68,7 +69,7 @@ func (s Surfer) GetInt64(name string, source interface{}) (int64, error) {
 	}
 }
 
-// return the given field as String from an interface{}
+// GetString returns the string value of the given field
 func (s Surfer) GetString(name string, source interface{}) (string, error) {
 	value, err := s.Get(name, source)
 	if err != nil {
@@ -77,7 +78,7 @@ func (s Surfer) GetString(name string, source interface{}) (string, error) {
 	return value.(string), nil
 }
 
-// return the given field as Bool from an interface{}
+// GetBool returns the bool value of the given field
 func (s Surfer) GetBool(name string, source interface{}) (bool, error) {
 	value, err := s.Get(name, source)
 	if err != nil {
@@ -92,7 +93,7 @@ func (s Surfer) GetBool(name string, source interface{}) (bool, error) {
 	}
 }
 
-// update the given field of the interface{} with a string
+// SetBool updates the given string field
 func (s Surfer) SetString(name string, value string, source interface{}) error {
 	f, err := getValueOf(name, source, s.sep)
 	if err != nil {
@@ -108,7 +109,7 @@ func (s Surfer) SetString(name string, value string, source interface{}) error {
 	return fmt.Errorf("field %v not valid for changing", f)
 }
 
-// update the given field of the interface{} with a Int64
+// SetInt64 updates the given int64 field
 func (s Surfer) SetInt64(name string, value int64, source interface{}) error {
 	v, err := getValueOf(name, source, s.sep)
 	if err != nil {
@@ -118,7 +119,7 @@ func (s Surfer) SetInt64(name string, value int64, source interface{}) error {
 	return nil
 }
 
-// update the given field of the interface{} with a Float64
+// SetFloat64 updates the given float64 field
 func (s Surfer) SetFloat64(name string, value float64, source interface{}) error {
 	v, err := getValueOf(name, source, s.sep)
 	if err != nil {
@@ -128,7 +129,7 @@ func (s Surfer) SetFloat64(name string, value float64, source interface{}) error
 	return nil
 }
 
-// update the given field of the interface{} with a Bool
+// SetBool updates the given bool field
 func (s Surfer) SetBool(name string, value bool, source interface{}) error {
 	v, err := getValueOf(name, source, s.sep)
 	if err != nil {
@@ -138,7 +139,7 @@ func (s Surfer) SetBool(name string, value bool, source interface{}) error {
 	return nil
 }
 
-// return the list of exported fields using their fully qualified names from the interface{}
+// GetVars extracts from the source a list of all exportable fields using their fully qualified names
 func (s Surfer) GetVars(source interface{}) ([]string, error) {
 	fields := []string{}
 	var obj reflect.Value
@@ -181,7 +182,7 @@ func (s Surfer) GetVars(source interface{}) ([]string, error) {
 	}
 }
 
-// return all fields and their values as a map from the interface{}
+// GetFlatData returns a map of interface{} including all fields extracted from the source
 func (s Surfer) GetFlatData(source interface{}) (map[string]interface{}, error) {
 	data := map[string]interface{}{}
 	var obj reflect.Value
@@ -224,6 +225,7 @@ func (s Surfer) GetFlatData(source interface{}) (map[string]interface{}, error) 
 	}
 }
 
+// NewSurfer creates a pointer to a new Surfer object with default configuration
 func NewSurfer(opts ...SurferOption) *Surfer {
 	return &Surfer{
 		sep: Default_sep,
