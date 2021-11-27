@@ -67,7 +67,7 @@ func Calculate(l1 interface{}) error {
 }
 ----
 
-== Technical constraints and limitations
+== Technical constraints, limitations and documentations
 
 DataQ only handles exported fields of the struct with a limited set of types:
 
@@ -75,6 +75,8 @@ DataQ only handles exported fields of the struct with a limited set of types:
 * float64
 * int64
 * bool
+
+Technical documentation: https://github.com/LosAngeles971/DataQ/blob/main/docs/DataQ.md
 
 == Inspirational references
 
