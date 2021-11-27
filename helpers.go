@@ -1,8 +1,5 @@
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Author: LosAngeles971
-Date: November 2021
-File: helpers.go
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+// Main and only package of DataQ
+// helpers.go includes utility functions, especially the crucial getValueOf
 package main
 
 import (
@@ -12,7 +9,7 @@ import (
 	"unicode"
 )
 
-// check if the field name is valid
+// Check if the relative field's name is valid (its len > 0 and the first letter capitalized)
 func checkFieldName(name string) error {
 	if len(name) < 0 {
 		return fmt.Errorf("field's name cannot be null")
@@ -23,7 +20,7 @@ func checkFieldName(name string) error {
 	return nil
 }
 
-// recursive browsing of a struct till to the desired target field
+// Recursive browsing of a struct to reach the target field by its name
 func getValueOf(name string, source interface{}, sep string) (reflect.Value, error) {
 	fields := strings.Split(name, sep)
 	field_name := fields[0]
@@ -62,7 +59,7 @@ func getValueOf(name string, source interface{}, sep string) (reflect.Value, err
 	}
 }
 
-// compare two fields without knowing their types
+// Two fields comparison without first knowing their types
 func Compare(f1 interface{}, f2 interface{}) (bool, error) {
 	k1 := reflect.TypeOf(f1).Kind()
 	k2 := reflect.TypeOf(f2).Kind()

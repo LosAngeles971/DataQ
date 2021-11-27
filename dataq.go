@@ -1,8 +1,5 @@
-/*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Author: LosAngeles971
-Date: November 2021
-File: dataq.go
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+// Main and only package of DataQ
+// dataq.go defines the Surfer object and its methods
 package main
 
 import (
@@ -210,7 +207,7 @@ func (s Surfer) GetFlatData(source interface{}) (map[string]interface{}, error) 
 						return data, err
 					}
 					for name, value := range subdata {
-						data[f_name + "." + name] = value
+						data[f_name + s.sep + name] = value
 					}
 				case reflect.Float64, reflect.String, reflect.Bool, reflect.Int, reflect.Float32:
 					data[f_name] = f.Interface()
