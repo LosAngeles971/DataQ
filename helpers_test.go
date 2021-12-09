@@ -105,3 +105,14 @@ func TestGet(t *testing.T) {
 		t.Errorf("variable %v must be %v not %v", Alfa_name, Alfa_value, vv)
 	}
 }
+
+/*
+func TestUpdateStructField(t *testing.T) {
+	l1 := getData()
+	s := NewSurfer()
+	err := s.set(Alfa_name, 5.0, &l1)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+*/
