@@ -113,7 +113,7 @@ func (s Surfer) GetFlatData(source interface{}) (map[string]interface{}, error) 
 						if err != nil {
 							return data, err
 						}
-						data[f_name + s.sep + k] = value
+						data[f_name+s.sep+k] = value
 					}
 				default:
 					log.Printf("field %v got a not supported type %v", f_name, f.Kind())

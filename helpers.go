@@ -1,5 +1,4 @@
-// Main and only package of DataQ
-// helpers.go includes utility functions, especially the crucial getValueOf
+// helpers.go includes utility functions
 package main
 
 import (
@@ -10,6 +9,7 @@ import (
 	"unicode"
 )
 
+// custom standardization for supported data types
 const (
 	T_PTR           = 0
 	T_STRUCT        = 1
@@ -23,6 +23,7 @@ const (
 	T_NOT_SUPPORTED = -1
 )
 
+// datatype returns the type of an interface using a custom standardization
 func datatype(i interface{}) int {
 	tt := reflect.ValueOf(i).Kind()
 	switch tt {
@@ -49,7 +50,7 @@ func datatype(i interface{}) int {
 	}
 }
 
-// Check if the relative field's name is valid (its len > 0 and the first letter capitalized)
+// checkFieldName checks if a relative field's name is syntattically valid
 func checkFieldName(name string) error {
 	if len(name) < 0 {
 		return fmt.Errorf("field's name cannot be null")
@@ -60,10 +61,10 @@ func checkFieldName(name string) error {
 	return nil
 }
 
+// getFieldsFromMap returns the list of keys from a map
 func getFieldsFromMap(m interface{}) []string {
 	fields := []string{}
 	tt := datatype(m)
-	//tt := reflect.TypeOf(m).Kind()
 	if tt != T_MAP {
 		log.Errorf("skipped fields recognizing because input is not a map but %v", tt)
 		return fields
@@ -105,6 +106,7 @@ func getFieldsFromMap(m interface{}) []string {
 	return fields
 }
 
+// getValueFromMap returs the value associated to the key "field" from a given map in the form of interface{}
 func getValueFromMap(field string, i interface{}) (interface{}, error) {
 	tt := datatype(i)
 	if tt != T_MAP {
@@ -120,7 +122,7 @@ func getValueFromMap(field string, i interface{}) (interface{}, error) {
 	return reflect.Value{}, fmt.Errorf("map does not contain field %v", field)
 }
 
-// Recursive browsing of a struct to reach the target field by its name
+// getValueOf returns the value of a given variable, recursively browsing the given data in the form of an interface{}
 func getValueOf(name string, source interface{}, sep string) (interface{}, error) {
 	fields := strings.Split(name, sep)
 	field_name := fields[0]
@@ -167,7 +169,7 @@ func getValueOf(name string, source interface{}, sep string) (interface{}, error
 	}
 }
 
-// Get returns the value of the given field
+// get returns the value of the given field from the given data in the form of an interface{}
 func (s Surfer) get(name string, source interface{}) (interface{}, int, error) {
 	f, err := getValueOf(name, source, s.sep)
 	if err != nil {
@@ -180,6 +182,7 @@ func (s Surfer) get(name string, source interface{}) (interface{}, int, error) {
 	return f, t, nil
 }
 
+// set updates the value of the given field into the given data in the form of an interface{}
 func (s Surfer) set(name string, value interface{}, source interface{}) error {
 	f, err := getValueOf(name, source, s.sep)
 	if err != nil {
