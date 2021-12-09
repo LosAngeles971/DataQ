@@ -1,15 +1,56 @@
-// Main and only package of DataQ
-// helpers.go includes utility functions, especially the crucial getValueOf
+// helpers.go includes utility functions
 package main
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 	"unicode"
 )
 
-// Check if the relative field's name is valid (its len > 0 and the first letter capitalized)
+// custom standardization for supported data types
+const (
+	T_PTR           = 0
+	T_STRUCT        = 1
+	T_INT           = 2
+	T_INT64         = 3
+	T_FLOAT32       = 4
+	T_FLOAT64       = 5
+	T_STRING        = 6
+	T_BOOL          = 7
+	T_MAP			= 8
+	T_NOT_SUPPORTED = -1
+)
+
+// datatype returns the type of an interface using a custom standardization
+func datatype(i interface{}) int {
+	tt := reflect.ValueOf(i).Kind()
+	switch tt {
+	case reflect.Ptr:
+		return T_PTR
+	case reflect.Struct:
+		return T_STRUCT
+	case reflect.Int:
+		return T_INT
+	case reflect.Int64:
+		return T_INT64
+	case reflect.Float32:
+		return T_FLOAT32
+	case reflect.Float64:
+		return T_FLOAT64
+	case reflect.String:
+		return T_STRING
+	case reflect.Bool:
+		return T_BOOL
+	case reflect.Map:
+		return T_MAP
+	default:
+		return T_NOT_SUPPORTED
+	}
+}
+
+// checkFieldName checks if a relative field's name is syntattically valid
 func checkFieldName(name string) error {
 	if len(name) < 0 {
 		return fmt.Errorf("field's name cannot be null")
@@ -20,12 +61,73 @@ func checkFieldName(name string) error {
 	return nil
 }
 
-// Recursive browsing of a struct to reach the target field by its name
-func getValueOf(name string, source interface{}, sep string) (reflect.Value, error) {
+// getFieldsFromMap returns the list of keys from a map
+func getFieldsFromMap(m interface{}) []string {
+	fields := []string{}
+	tt := datatype(m)
+	if tt != T_MAP {
+		log.Errorf("skipped fields recognizing because input is not a map but %v", tt)
+		return fields
+	}
+	kk := reflect.TypeOf(m).Key().Kind()
+	if kk != reflect.String {
+		log.Errorf("skipped fields recognizing because map's keys are not string but %v", kk)
+		return fields
+	}
+	vv := reflect.TypeOf(m).Elem().Kind()
+	switch vv {
+	case reflect.Int:
+		for k := range m.(map[string]int) {
+			fields = append(fields, k)
+		}
+	case reflect.Int64:
+		for k := range m.(map[string]int64) {
+			fields = append(fields, k)
+		}
+	case reflect.Float32:
+		for k := range m.(map[string]float32) {
+			fields = append(fields, k)
+		}
+	case reflect.Float64:
+		for k := range m.(map[string]float64) {
+			fields = append(fields, k)
+		}
+	case reflect.Bool:
+		for k := range m.(map[string]bool) {
+			fields = append(fields, k)
+		}
+	case reflect.String:
+		for k := range m.(map[string]string) {
+			fields = append(fields, k)
+		}
+	default:
+		log.Errorf("skipped fields recognizing because map's keys are not string but %v", vv)
+	}
+	return fields
+}
+
+// getValueFromMap returs the value associated to the key "field" from a given map in the form of interface{}
+func getValueFromMap(field string, i interface{}) (interface{}, error) {
+	tt := datatype(i)
+	if tt != T_MAP {
+		return nil, fmt.Errorf("skipped fields recognizing because input is not a map but code: %v", tt)
+	}
+	m := reflect.ValueOf(i)
+	// in case, to get type of fields -> datatype(reflect.TypeOf(i).Elem())
+	for _, e := range m.MapKeys() {
+		if e.Interface().(string) == field {
+			return m.MapIndex(e).Interface(), nil
+		}
+	}
+	return reflect.Value{}, fmt.Errorf("map does not contain field %v", field)
+}
+
+// getValueOf returns the value of a given variable, recursively browsing the given data in the form of an interface{}
+func getValueOf(name string, source interface{}, sep string) (interface{}, error) {
 	fields := strings.Split(name, sep)
 	field_name := fields[0]
 	if err := checkFieldName(field_name); err != nil {
-		return reflect.Value{}, err
+		return nil, err
 	}
 	var obj reflect.Value
 	if reflect.ValueOf(source).Kind() == reflect.Ptr {
@@ -41,58 +143,68 @@ func getValueOf(name string, source interface{}, sep string) (reflect.Value, err
 		if f.IsValid() {
 			if len(fields) == 1 {
 				// positive exit: reached the target field
-				return f, nil
+				return f.Interface(), nil
 			} else {
 				switch f.Kind() {
 				case reflect.Struct, reflect.Ptr:
 					// going to the sublevel (struct) or getting the object from the pointer
-					return getValueOf(strings.Join(fields[1:], "."), f.Interface(), sep)
+					return getValueOf(strings.Join(fields[1:], sep), f.Interface(), sep)
+				case reflect.Map:
+					// only one level of mapping is supported
+					// map of complex objects is not supported
+					value, err := getValueFromMap(strings.Join(fields[1:], sep), f.Interface())
+					if err != nil {
+						return nil, err
+					}
+					return value, err
 				default:
 					// error: field is not a struct or pointer (deep dive not possible)
-					return reflect.Value{}, fmt.Errorf("field %v is a not supported type", f)
+					return nil, fmt.Errorf("field %v is a not supported type", f)
 				}
-			}				
+			}
 		}
-		return reflect.Value{}, fmt.Errorf("missing field %v", field_name)
+		return nil, fmt.Errorf("missing field %v", field_name)
 	default:
-		return reflect.Value{}, fmt.Errorf("unhandled type of data %v", obj.Kind())
+		return nil, fmt.Errorf("unhandled type of data %v", obj.Kind())
 	}
 }
 
-// Two fields comparison without first knowing their types
-func Compare(f1 interface{}, f2 interface{}) (bool, error) {
-	k1 := reflect.TypeOf(f1).Kind()
-	k2 := reflect.TypeOf(f2).Kind()
-	if k1 != k2 {
-		return false, nil
+// get returns the value of the given field from the given data in the form of an interface{}
+func (s Surfer) get(name string, source interface{}) (interface{}, int, error) {
+	f, err := getValueOf(name, source, s.sep)
+	if err != nil {
+		return nil, T_NOT_SUPPORTED, err
 	}
-	switch k1 {
-	case reflect.Int:
-		if f1.(int) != f2.(int) {
-			return false, nil
-		}
-	case reflect.Int64:
-		if f1.(int64) != f2.(int64) {
-			return false, nil
-		}
-	case reflect.Float32:
-		if f1.(float32) != f2.(float32) {
-			return false, nil
-		}
-	case reflect.Float64:
-		if f1.(float64) != f2.(float64) {
-			return false, nil
-		}
-	case reflect.Bool:
-		if f1.(bool) != f2.(bool) {
-			return false, nil
-		}
-	case reflect.String:
-		if f1.(string) != f2.(string) {
-			return false, nil
-		}
-	default:
-		return false, fmt.Errorf("unsupported type %v", k1)
+	t := datatype(f)
+	if t == T_NOT_SUPPORTED {
+		return f, T_NOT_SUPPORTED, fmt.Errorf("type of data not supported: %v", t)
 	}
-	return true, nil
+	return f, t, nil
+}
+
+// set updates the value of the given field into the given data in the form of an interface{}
+func (s Surfer) set(name string, value interface{}, source interface{}) error {
+	f, err := getValueOf(name, source, s.sep)
+	if err != nil {
+		return err
+	}
+	t := datatype(f)
+	v := reflect.ValueOf(f)
+	if v.IsValid() {
+		if v.CanSet() {
+			switch t {
+			case T_STRING:
+				v.SetString(value.(string))
+			case T_INT64:
+				v.SetInt(value.(int64))
+			case T_FLOAT64:
+				v.SetFloat(value.(float64))
+			case T_BOOL:
+				v.SetBool(value.(bool))
+			}
+			return nil
+		}
+		return fmt.Errorf("field %v cannot be updated, verify passed input interface belongs to a pointer to data", name)
+	}
+	return fmt.Errorf("field %v not valid for changing", f)
 }
