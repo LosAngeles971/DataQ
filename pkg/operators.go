@@ -5,7 +5,6 @@ package pkg
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -75,56 +74,36 @@ func (s Surfer) GetBool(name string, source interface{}) (bool, error) {
 	}
 }
 
-// SetString updates the given string field
-func (s Surfer) SetString(name string, value string, source interface{}) error {
-	return set(name, value, source, s.sep)
-}
-
-// SetInt64 updates the given int64 field
-func (s Surfer) SetInt64(name string, value int64, source interface{}) error {
-	return set(name, value, source, s.sep)
-}
-
-// SetFloat64 updates the given float64 field
-func (s Surfer) SetFloat64(name string, value float64, source interface{}) error {
-	return set(name, value, source, s.sep)
-}
-
-// SetBool updates the given bool field
-func (s Surfer) SetBool(name string, value bool, source interface{}) error {
-	return set(name, value, source, s.sep)
-}
-
 // Two fields comparison without first knowing their types
 func Compare(f1 interface{}, f2 interface{}) (bool, error) {
-	k1 := reflect.ValueOf(f1).Kind()
-	k2 := reflect.ValueOf(f2).Kind()
+	k1 := datatype(f1)
+	k2 := datatype(f2)
 	if k1 != k2 {
 		log.Tracef("different types %v and %v for %v and %v", k1, k2, f1, f2)
 		return false, nil
 	}
 	switch k1 {
-	case reflect.Int:
+	case T_INT:
 		if f1.(int) != f2.(int) {
 			return false, nil
 		}
-	case reflect.Int64:
+	case T_INT64:
 		if f1.(int64) != f2.(int64) {
 			return false, nil
 		}
-	case reflect.Float32:
+	case T_FLOAT32:
 		if f1.(float32) != f2.(float32) {
 			return false, nil
 		}
-	case reflect.Float64:
+	case T_FLOAT64:
 		if f1.(float64) != f2.(float64) {
 			return false, nil
 		}
-	case reflect.Bool:
+	case T_BOOL:
 		if f1.(bool) != f2.(bool) {
 			return false, nil
 		}
-	case reflect.String:
+	case T_STRING:
 		if f1.(string) != f2.(string) {
 			return false, nil
 		}
