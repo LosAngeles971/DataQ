@@ -19,7 +19,7 @@ const (
 	T_FLOAT64       = 5
 	T_STRING        = 6
 	T_BOOL          = 7
-	T_MAP			= 8
+	T_MAP           = 8
 	T_NOT_SUPPORTED = -1
 )
 
@@ -100,8 +100,12 @@ func getFieldsFromMap(m interface{}) []string {
 		for k := range m.(map[string]string) {
 			fields = append(fields, k)
 		}
+	case reflect.Interface:
+		for k := range m.(map[string]interface{}) {
+			fields = append(fields, k)
+		}
 	default:
-		log.Errorf("skipped fields recognizing because map's keys are not string but %v", vv)
+		log.Errorf("skipped fields recognizing because the type of map's values is unsupported: %v", vv)
 	}
 	return fields
 }
@@ -183,6 +187,7 @@ func get(name string, source interface{}, sep string) (interface{}, int, error) 
 }
 
 // set updates the value of the given field into the given data in the form of an interface{}
+/*
 func set(name string, value interface{}, source interface{}, sep string) error {
 	f, err := getValueOf(name, source, sep)
 	if err != nil {
@@ -208,3 +213,4 @@ func set(name string, value interface{}, source interface{}, sep string) error {
 	}
 	return fmt.Errorf("field %v not valid for changing", f)
 }
+*/

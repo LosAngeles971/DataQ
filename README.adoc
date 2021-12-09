@@ -67,6 +67,13 @@ func Calculate(l1 interface{}) error {
 }
 ----
 
+== How to install
+
+[source,golang]
+----
+go get github.com/LosAngeles971/DataQ@vx.y.z
+----
+
 == Technical constraints, limitations and documentations
 
 DataQ only handles exported fields of the struct with a limited set of types:

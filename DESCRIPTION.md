@@ -1,5 +1,4 @@
 # DataQ
 
-DataQ's purpose is simplifying the read/write operations over data build on top of a concatenation of structs.
-The idea is allowing to reference struct's fields using a hierarchical fully qualified name.
+DataQ's is a library to simplify the access of fields from complex data structure not known ate design time, referencing the fields by means of fully qualified names based on a dot notation.
 
