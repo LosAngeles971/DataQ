@@ -1,5 +1,5 @@
 // helpers.go includes utility functions
-package main
+package pkg
 
 import (
 	"fmt"
@@ -170,8 +170,8 @@ func getValueOf(name string, source interface{}, sep string) (interface{}, error
 }
 
 // get returns the value of the given field from the given data in the form of an interface{}
-func (s Surfer) get(name string, source interface{}) (interface{}, int, error) {
-	f, err := getValueOf(name, source, s.sep)
+func get(name string, source interface{}, sep string) (interface{}, int, error) {
+	f, err := getValueOf(name, source, sep)
 	if err != nil {
 		return nil, T_NOT_SUPPORTED, err
 	}
@@ -183,8 +183,8 @@ func (s Surfer) get(name string, source interface{}) (interface{}, int, error) {
 }
 
 // set updates the value of the given field into the given data in the form of an interface{}
-func (s Surfer) set(name string, value interface{}, source interface{}) error {
-	f, err := getValueOf(name, source, s.sep)
+func set(name string, value interface{}, source interface{}, sep string) error {
+	f, err := getValueOf(name, source, sep)
 	if err != nil {
 		return err
 	}

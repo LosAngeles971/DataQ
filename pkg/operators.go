@@ -1,6 +1,6 @@
 // Main and only package of DataQ
 // dataq.go defines the Surfer object and its methods
-package main
+package pkg
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 // GetBool returns the float64 value of the given field
 func (s Surfer) GetFloat64(name string, source interface{}) (float64, error) {
-	i, t, err := s.get(name, source)
+	i, t, err := get(name, source, s.sep)
 	if err != nil {
 		return 0.0, err
 	}
@@ -28,7 +28,7 @@ func (s Surfer) GetFloat64(name string, source interface{}) (float64, error) {
 
 // GetInt64 returns the int64 value of the given field
 func (s Surfer) GetInt64(name string, source interface{}) (int64, error) {
-	i, t, err := s.get(name, source)
+	i, t, err := get(name, source, s.sep)
 	if err != nil {
 		return 0.0, err
 	}
@@ -44,7 +44,7 @@ func (s Surfer) GetInt64(name string, source interface{}) (int64, error) {
 
 // GetString returns the string value of the given field
 func (s Surfer) GetString(name string, source interface{}) (string, error) {
-	i, t, err := s.get(name, source)
+	i, t, err := get(name, source, s.sep)
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +58,7 @@ func (s Surfer) GetString(name string, source interface{}) (string, error) {
 
 // GetBool returns the bool value of the given field
 func (s Surfer) GetBool(name string, source interface{}) (bool, error) {
-	i, t, err := s.get(name, source)
+	i, t, err := get(name, source, s.sep)
 	if err != nil {
 		return false, err
 	}
@@ -77,22 +77,22 @@ func (s Surfer) GetBool(name string, source interface{}) (bool, error) {
 
 // SetString updates the given string field
 func (s Surfer) SetString(name string, value string, source interface{}) error {
-	return s.set(name, value, source)
+	return set(name, value, source, s.sep)
 }
 
 // SetInt64 updates the given int64 field
 func (s Surfer) SetInt64(name string, value int64, source interface{}) error {
-	return s.set(name, value, source)
+	return set(name, value, source, s.sep)
 }
 
 // SetFloat64 updates the given float64 field
 func (s Surfer) SetFloat64(name string, value float64, source interface{}) error {
-	return s.set(name, value, source)
+	return set(name, value, source, s.sep)
 }
 
 // SetBool updates the given bool field
 func (s Surfer) SetBool(name string, value bool, source interface{}) error {
-	return s.set(name, value, source)
+	return set(name, value, source, s.sep)
 }
 
 // Two fields comparison without first knowing their types

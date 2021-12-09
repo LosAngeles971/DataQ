@@ -1,6 +1,5 @@
-// Main and only package of DataQ
 // dataq.go defines the Surfer object and its methods
-package main
+package pkg
 
 import (
 	"fmt"
