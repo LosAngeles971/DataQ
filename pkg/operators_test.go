@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"testing"
@@ -54,7 +54,7 @@ func TestReadL1ExistentField(t *testing.T) {
 func TestReadL1UnexportedField(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
-	_, _, err := s.get(Beta_name, l1)
+	_, _, err := get(Beta_name, l1, s.sep)
 	if err == nil {
 		t.Error("beta cannot be accessed")
 	}
@@ -63,7 +63,7 @@ func TestReadL1UnexportedField(t *testing.T) {
 func TestReadL2NotExistentField(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
-	_, _, err2 := s.get("Alfa.Omega", l1)
+	_, _, err2 := get("Alfa.Omega", l1, s.sep)
 	if err2 == nil {
 		t.Errorf("varibale Alfa.omega should not exist")
 	}
