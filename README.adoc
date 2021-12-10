@@ -90,14 +90,18 @@ go get github.com/LosAngeles971/DataQ@vx.y.z
 
 == Technical constraints, limitations and documentations
 
-DataQ only handles exported fields of the struct with a limited set of types:
+Immutable:: DataQ only allows to read fields from a complex data structure, write operations are not permitted yet.
+
+Supported data types for fields:: DataQ only to read the following data types:
 
 * string
+* float32
 * float64
+* int
 * int64
 * bool
 
-API documentation: https://github.com/LosAngeles971/DataQ/blob/main/docs/DataQ.md
+Documentation of API:: https://github.com/LosAngeles971/DataQ/blob/main/.docs/DataQ.md
 
 == Inspirational references
 
