@@ -1,9 +1,8 @@
 = DataQ
 
-DataQ's purpose is simplifying the read/write operations over data build on top of a concatenation of structs.
-The idea is allowing to reference struct's fields using a hierarchical fully qualified name.
+DataQ's allows to access fields of complex data structure, referencing the fields by means of fully qualified names based on a dot notation.
 
-Below an fictional data structure built on top of a concatenation of a three structs.
+Given the following data structure as example:
 
 [source,golang]
 ----
@@ -14,60 +13,75 @@ type Level3 struct {
 type Level2 struct {
 	Ypsilon int
 	Omega   string
-	Eplison *Level3
+	Epsilon *Level3
 }
 
 type Level1 struct {
 	Alfa  float64
+	beta  string
 	Gamma *Level2
-}
+	Zeta  map[string]float64
+}}
+
+var l2 = Level2{
+		Ypsilon: 5,
+		Omega:   "hello",
+		Epsilon: nil,
+	}
+var l1 = Level1{
+		Alfa:  1.0,
+		beta:  "not accessible because not exported",
+		Gamma: &l2,
+		Zeta: map[string]float64{
+			"key1": 10.5,
+			"key2": 12.5,
+		},
+	}
 ----
 
-DataQ allows to reference the above fields using fully qualified names:
-
-* Alfa
-* Gamma.Ypsilon
-* Gamma.Omega
-* Gamma.Epsilon.Delta
-
-== Why DataQ?
-
-The initial idea behind this simple DataQ library is to simplify the usage of data transfer objects, when the source data structure is different from the target one.
-
-A possible scenario is using Govaluate footnote:[https://github.com/Knetic/govaluate] to evaluate arbitrary expressions, where referenced variables come from mashaling a JSON response and the latter is obtained by an external API. Govaluate accepts a __map[string]interface{}__ to get the variables reference by the expressions, thus you may have to build that map extracing data from the potentially complex data structure coming from the API.
-
-Given the previous fictional struct Level1, you may suppose to calculate the mathematical expression: 
-
-[source,math]
-----
-"Alfa + Gamma_Ypsilon"
-----
-
-Note that the separator for the fully qualified name of the field is now "_", in order to avoid conflict with the mathematical syntax.
-
-Using DataQ, the resulting code is:
+Following actions are possible using DataQ:
 
 [source,golang]
 ----
-func Calculate(l1 interface{}) error {
-	s := NewSurfer(WithSep("_"))
-	expr, err := govaluate.NewEvaluableExpression("Alfa + Gamma_Ypsilon")
-	if err != nil {
-		return err
-	}
-	flat_data, err := s.GetFlatData(l1)
-	if err != nil {
-		return err
-	}
-	result, err := expr.Evaluate(flat_data)
-	if err != nil {
-		return err
-	}
-	log.Print(result)
-}
+surfer := NewSurfer()
+
+alfa, _ := s.GetFloat64("Alfa")
+ypsilon, _ := s.GetInt64("Gamma.Ypsilon")
+omega, _ := s.GetString("Gamma.Omega")
 ----
 
+Beyond accessing a single field, DataQ allows to translate a data structure into a flat map[string]interface{} object, where:author: 
+
+* keys are the fully qualified name of the original fields
+* values can only be the primitive supported data
+
+== Why DataQ?
+
+DataQ may be useful when you have to handle data transfer objects coming from external API. Instead of remapping the DTO into an internal complete (or partial) data representation, it can be an interface{} and its fields can be accessed using DataQ.
+
+Another possible scenario is Govaluate footnote:[https://github.com/Knetic/govaluate]. Govaluate evaluates arbitrary expressions, starting from a set of variables represented by a __map[string]interface{}__. Thinking of the cases where the desired variables come from a complex data structure, DataQ may help you translating the latter into a __map[string]interface{}__.
+
+For instance, given the previous data structure, you may calculate the expression _Alfa + Gamma_Yplison_ in the following way:
+
+[source,golang]
+----
+s := NewSurfer(WithSep("_"))
+expr, _ := govaluate.NewEvaluableExpression("Alfa + Gamma_Ypsilon")
+flat_data, _ s.GetFlatData(l1)
+result, _ := expr.Evaluate(flat_data)
+log.Print(result)
+----
+
+Note:: in this scenario the separator for the fully qualified names is "_", to avoid conflict with the mathematical syntax of Govaluate.
+
 == How to install
+
+[source,golang]
+----
+go get github.com/LosAngeles971/DataQ
+----
+
+Or: 
 
 [source,golang]
 ----
@@ -83,7 +97,7 @@ DataQ only handles exported fields of the struct with a limited set of types:
 * int64
 * bool
 
-Technical documentation: https://github.com/LosAngeles971/DataQ/blob/main/docs/DataQ.md
+API documentation: https://github.com/LosAngeles971/DataQ/blob/main/docs/DataQ.md
 
 == Inspirational references
 

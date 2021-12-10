@@ -4,9 +4,14 @@ import (
 	"testing"
 )
 
+type Level3 struct {
+	Delta int
+}
+
 type Level2 struct {
 	Ypsilon int
 	Omega   string
+	Epsilon *Level3
 }
 
 type Level1 struct {
@@ -22,6 +27,7 @@ const (
 	Alfa_value            = 1.0
 	Alfa_update           = 2.0
 	Gamma                 = "Gamma"
+	Epsilon  			  = "Epsilon"
 	Ypsilon_name          = "Ypsilon"
 	Ypsilon_value         = 10
 	Omega_name            = "Omega"
@@ -51,6 +57,7 @@ func getData() Level1 {
 	l2 := Level2{
 		Ypsilon: Ypsilon_value,
 		Omega:   Omega_value,
+		Epsilon: nil,
 	}
 	return Level1{
 		Alfa:  Alfa_value,
@@ -62,7 +69,7 @@ func getData() Level1 {
 		},
 	}
 }
-func TestDatatypeWithPrimitives(t *testing.T) {
+func TestDatatype(t *testing.T) {
 	aa := map[string]interface{}{
 		"a": float32(1.0),
 		"b": float64(5.0),
@@ -88,9 +95,6 @@ func TestDatatypeWithPrimitives(t *testing.T) {
 	if datatype(aa) != T_MAP {
 		t.Errorf("expected type of aa is map not %v", datatype(aa))
 	}
-}
-
-func TestDatatypeWithStruct(t *testing.T) {
 	l1 := getData()
 	if datatype(l1) != T_STRUCT {
 		t.Errorf("wrong type for %v - %v", l1, datatype(l1))
@@ -164,13 +168,11 @@ func TestGet(t *testing.T) {
 	}
 }
 
-/*
-func TestUpdateStructField(t *testing.T) {
+func TestGetOfNil(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
-	err := s.set(Alfa_name, 5.0, &l1)
-	if err != nil {
-		t.Fatal(err)
+	_, _, err := get(Gamma + s.sep + Epsilon, l1, s.sep)
+	if err == nil {
+		t.Fatal("accessing a nil data cannot be done")
 	}
 }
-*/

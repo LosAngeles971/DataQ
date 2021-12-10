@@ -1,4 +1,4 @@
-// helpers.go includes utility functions
+// helpers.go includes all utility (not exported) functions
 package pkg
 
 import (
@@ -51,14 +51,16 @@ func datatype(i interface{}) int {
 }
 
 // checkFieldName checks if a relative field's name is syntattically valid
-func checkFieldName(name string) error {
+func checkFieldName(name string) bool {
 	if len(name) < 0 {
-		return fmt.Errorf("field's name cannot be null")
+		log.Errorf("field's name cannot be null")
+		return false
 	}
 	if !unicode.IsUpper([]rune(name)[0]) {
-		return fmt.Errorf("field must be exported (first letter of the name capitalized) [%v]", name[0])
+		log.Errorf("field must be exported (first letter of the name capitalized) [%v]", name[0])
+		return false
 	}
-	return nil
+	return true
 }
 
 // getFieldsFromMap returns the list of keys from a map
@@ -130,8 +132,8 @@ func getValueFromMap(field string, i interface{}) (interface{}, error) {
 func getValueOf(name string, source interface{}, sep string) (interface{}, error) {
 	fields := strings.Split(name, sep)
 	field_name := fields[0]
-	if err := checkFieldName(field_name); err != nil {
-		return nil, err
+	if !checkFieldName(field_name) {
+		return nil, fmt.Errorf("field %v is not valid", field_name)
 	}
 	var obj reflect.Value
 	if reflect.ValueOf(source).Kind() == reflect.Ptr {
@@ -142,29 +144,49 @@ func getValueOf(name string, source interface{}, sep string) (interface{}, error
 	}
 	switch obj.Kind() {
 	case reflect.Struct:
-		f := obj.FieldByName(field_name)
+		f_value := obj.FieldByName(field_name)
 		// f must not be a (struct) zero value
-		if f.IsValid() {
-			if len(fields) == 1 {
-				// positive exit: reached the target field
-				return f.Interface(), nil
-			} else {
-				switch f.Kind() {
-				case reflect.Struct, reflect.Ptr:
-					// going to the sublevel (struct) or getting the object from the pointer
-					return getValueOf(strings.Join(fields[1:], sep), f.Interface(), sep)
-				case reflect.Map:
-					// only one level of mapping is supported
-					// map of complex objects is not supported
-					value, err := getValueFromMap(strings.Join(fields[1:], sep), f.Interface())
-					if err != nil {
-						return nil, err
-					}
-					return value, err
-				default:
-					// error: field is not a struct or pointer (deep dive not possible)
-					return nil, fmt.Errorf("field %v is a not supported type", f)
+		if f_value.IsValid() {
+			switch f_value.Kind() {
+			case reflect.Float64, reflect.String, reflect.Bool, reflect.Int, reflect.Float32:
+				if len(fields) == 1 {
+					// positive exit: reached the target field
+					return f_value.Interface(), nil
+				} else {
+					return nil, fmt.Errorf("field [%v] is primitive, cannot be a sublevel ", field_name)
 				}
+			case reflect.Struct, reflect.Ptr:
+				if len(fields) == 1 {
+					// positive exit: reached the target field
+					return nil, fmt.Errorf("requested field [%v] points to a struct or a pointer", field_name)
+				} else {
+					if f_value.IsNil() {
+						return nil, fmt.Errorf("surfing stopped by nil field [%v]", field_name)
+					} else {
+						// going to the sublevel (struct) or getting the object from the pointer
+						return getValueOf(strings.Join(fields[1:], sep), f_value.Interface(), sep)
+					}
+				}
+			case reflect.Map:
+				if len(fields) == 1 {
+					// positive exit: reached the target field
+					return nil, fmt.Errorf("requested field [%v] points to a map", field_name)
+				} else {
+					if f_value.IsNil() {
+						return nil, fmt.Errorf("surfing stopped by nil field [%v]", field_name)
+					} else {
+						// only one level of mapping is supported
+						// map of complex objects is not supported
+						value, err := getValueFromMap(strings.Join(fields[1:], sep), f_value.Interface())
+						if err != nil {
+							return nil, err
+						}
+						return value, err
+					}
+				}
+			default:
+				// error: field is not a struct or pointer (deep dive not possible)
+				return nil, fmt.Errorf("field %v is a not supported type", field_name)
 			}
 		}
 		return nil, fmt.Errorf("missing field %v", field_name)
@@ -185,32 +207,3 @@ func get(name string, source interface{}, sep string) (interface{}, int, error) 
 	}
 	return f, t, nil
 }
-
-// set updates the value of the given field into the given data in the form of an interface{}
-/*
-func set(name string, value interface{}, source interface{}, sep string) error {
-	f, err := getValueOf(name, source, sep)
-	if err != nil {
-		return err
-	}
-	t := datatype(f)
-	v := reflect.ValueOf(f)
-	if v.IsValid() {
-		if v.CanSet() {
-			switch t {
-			case T_STRING:
-				v.SetString(value.(string))
-			case T_INT64:
-				v.SetInt(value.(int64))
-			case T_FLOAT64:
-				v.SetFloat(value.(float64))
-			case T_BOOL:
-				v.SetBool(value.(bool))
-			}
-			return nil
-		}
-		return fmt.Errorf("field %v cannot be updated, verify passed input interface belongs to a pointer to data", name)
-	}
-	return fmt.Errorf("field %v not valid for changing", f)
-}
-*/

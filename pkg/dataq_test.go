@@ -8,33 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func TestGetVars(t *testing.T) {
-	l1 := getData()
-	s := NewSurfer()
-	vars, err := s.GetVars(l1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range vars {
-		_, ok := Vars[name]
-		if !ok {
-			t.Errorf("variable %v is not expected", name)
-		}
-	}
-	for name := range Vars {
-		ok := false
-		for i := range vars {
-			if vars[i] == name {
-				ok = true
-				break
-			}
-		}
-		if !ok {
-			t.Errorf("variable %v is missing", name)
-		}
-	}
-}
-
 func TestGetFlatDatas(t *testing.T) {
 	ff := float64(5.0)
 	//vv := reflect.ValueOf(ff)
