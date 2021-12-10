@@ -63,7 +63,7 @@ func TestCompare(t *testing.T) {
 	}
 }
 
-func TestReadL1ExistentField(t *testing.T) {
+func TestGetFloat64(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
 	alfa, err := s.GetFloat64(Alfa_name, l1)
@@ -74,7 +74,7 @@ func TestReadL1ExistentField(t *testing.T) {
 		t.Errorf("Alfa should be %v not %v", l1.Alfa, alfa)
 	}
 }
-func TestReadL1UnexportedField(t *testing.T) {
+func TestGetUnexportedField(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
 	_, _, err := get(Beta_name, l1, s.sep)
@@ -83,7 +83,7 @@ func TestReadL1UnexportedField(t *testing.T) {
 	}
 }
 
-func TestReadL2NotExistentField(t *testing.T) {
+func TestGetNotExistentField(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
 	_, _, err2 := get("Alfa.Omega", l1, s.sep)
@@ -92,7 +92,7 @@ func TestReadL2NotExistentField(t *testing.T) {
 	}
 }
 
-func TestReadL2ExistentField(t *testing.T) {
+func TestGetString(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
 	omega, err2 := s.GetString("Gamma.Omega", l1)
@@ -104,7 +104,7 @@ func TestReadL2ExistentField(t *testing.T) {
 	}
 }
 
-func TestReadValidFieldFromMap(t *testing.T) {
+func TestGetFromMap(t *testing.T) {
 	l1 := getData()
 	s := NewSurfer()
 	z1, err := s.GetFloat64(Zeta+"."+Zeta_field1, l1)
@@ -123,7 +123,7 @@ func TestReadValidFieldFromMap(t *testing.T) {
 	}
 }
 
-func TestReadFromJson(t *testing.T) {
+func TestGetFromUnmarshaledJson(t *testing.T) {
 	dd := JData{
 		Data: map[string]interface{}{},
 	}
